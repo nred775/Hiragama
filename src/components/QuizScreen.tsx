@@ -38,6 +38,7 @@ export function QuizScreen({
   const [totalAnswered, setTotalAnswered] = useState(0);
 
   const canvasRef = useRef<DrawingCanvasRef>(null);
+  const answeredTime = useRef<number>(0);
 
   // Initialize questions
   useEffect(() => {
@@ -128,6 +129,7 @@ export function QuizScreen({
   const handleGuess = (isCorrect: boolean) => {
     setStatus(isCorrect ? 'correct' : 'wrong');
     setTotalAnswered(prev => prev + 1);
+    answeredTime.current = Date.now();
     
     let newScore = score;
     let newStreak = streak;
@@ -146,12 +148,6 @@ export function QuizScreen({
         newMissed.push(questions[currentIndex]);
         setMissedCharacters(newMissed);
       }
-    }
-    
-    if (quizMode !== 'drawing') {
-      setTimeout(() => {
-        handleNext(newScore, newStreak, newMissed);
-      }, isCorrect ? 1000 : 2000);
     }
   };
 
@@ -178,12 +174,30 @@ export function QuizScreen({
     handleNext(newScore, newStreak, newMissed);
   };
   
-  const submitTyping = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (status !== 'idle') return;
+  const submitTyping = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (status !== 'idle') {
+      if (Date.now() - answeredTime.current > 400) {
+        handleNext(score, streak, missedCharacters);
+      }
+      return;
+    }
     const guess = inputValue.trim().toLowerCase();
     if (!guess) return;
     handleGuess(guess === questions[currentIndex].romaji);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (status !== 'idle') return;
+    const val = e.target.value;
+    setInputValue(val);
+    
+    const trimmed = val.trim().toLowerCase();
+    const targetLength = questions[currentIndex].romaji.length;
+    
+    if (trimmed.length === targetLength) {
+      handleGuess(trimmed === questions[currentIndex].romaji);
+    }
   };
 
   const saveToLocal = (currentStreakVal: number = streak) => {
@@ -249,8 +263,8 @@ export function QuizScreen({
                   <input 
                     type="text" 
                     value={inputValue}
-                    onChange={e => setInputValue(e.target.value)}
-                    disabled={status !== 'idle'}
+                    onChange={handleInputChange}
+                    readOnly={status !== 'idle'}
                     placeholder="Type the sound..."
                     autoFocus
                     autoComplete="off"
@@ -353,13 +367,13 @@ export function QuizScreen({
       <AnimatePresence>
         {status !== 'idle' && status !== 'show-answer' && quizMode !== 'drawing' && (
           <motion.div 
-            initial={{ y: '160%', x: '-50%' }}
-            animate={{ y: 0, x: '-50%' }}
-            exit={{ y: '160%', x: '-50%' }}
+            initial={{ y: '160%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '160%' }}
             transition={{ type: "spring", bounce: 0.1, duration: 0.4 }}
-            className="absolute bottom-8 left-1/2 w-[calc(100%-2rem)] max-w-[340px] z-50"
+            className="fixed bottom-0 left-0 w-full z-50 p-4 pb-8 sm:absolute sm:bottom-8 sm:left-1/2 sm:w-[calc(100%-2rem)] sm:max-w-[400px] sm:-translate-x-1/2 sm:pb-4"
           >
-            <div className={`p-5 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] flex items-center justify-between border-2 ${status === 'correct' ? 'bg-emerald-950 border-emerald-800/50' : 'bg-rose-950 border-rose-800/50'}`}>
+            <div className={`p-5 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] flex flex-col gap-5 border-2 ${status === 'correct' ? 'bg-emerald-950 border-emerald-800/50' : 'bg-rose-950 border-rose-800/50'}`}>
               <div className="flex flex-col gap-2 w-full">
                 <div className="flex items-center gap-4">
                   <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white ${status === 'correct' ? 'bg-emerald-500 shadow-md shadow-emerald-900/50' : 'bg-rose-500 shadow-md shadow-rose-900/50'}`}>
@@ -378,6 +392,13 @@ export function QuizScreen({
                   </div>
                 )}
               </div>
+              
+              <Button 
+                onClick={() => handleNext(score, streak, missedCharacters)}
+                className={`w-full py-6 text-lg font-bold rounded-2xl ${status === 'correct' ? '!bg-emerald-600 hover:!bg-emerald-500 !text-white' : '!bg-rose-600 hover:!bg-rose-500 !text-white'}`}
+              >
+                Continue
+              </Button>
             </div>
           </motion.div>
         )}
