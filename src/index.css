@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+  --font-jp: "Kosugi Maru", sans-serif;
+}
+
+body {
+  background-color: #020617;
+  color: #f8fafc;
+}
