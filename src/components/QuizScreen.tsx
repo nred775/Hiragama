@@ -10,13 +10,11 @@ import { DrawingCanvas, DrawingCanvasRef } from './DrawingCanvas';
 export function QuizScreen({
   onNavigate,
   selectedChars, // romaji array
-  quizLength,
   quizMode,
   onComplete
 }: {
   onNavigate: (screen: ScreenState) => void;
   selectedChars: string[];
-  quizLength: number | 'endless';
   quizMode: QuizMode;
   onComplete: (data: QuizResultsData) => void;
 }) {
@@ -44,31 +42,9 @@ export function QuizScreen({
   // Initialize questions
   useEffect(() => {
     const chars = hiraganaData.filter(h => selectedChars.includes(h.romaji));
-    let initialQs: Hiragana[] = [];
-    
-    if (quizLength !== 'endless') {
-      let remaining = quizLength;
-      let lastChar = '';
-      
-      while (remaining > 0) {
-        let bag = shuffleArray([...chars]);
-        if (bag.length > 1 && bag[0].romaji === lastChar) {
-          const temp = bag[0];
-          bag[0] = bag[1];
-          bag[1] = temp;
-        }
-        const take = Math.min(bag.length, remaining);
-        initialQs.push(...bag.slice(0, take));
-        lastChar = initialQs[initialQs.length - 1].romaji;
-        remaining -= take;
-      }
-      setQuestions(initialQs);
-    } else {
-      // Endless mode initial bag
-      let bag = shuffleArray([...chars]);
-      setQuestions(bag);
-    }
-  }, [quizLength, selectedChars]);
+    const bag = shuffleArray([...chars]);
+    setQuestions(bag);
+  }, [selectedChars]);
 
   useEffect(() => {
     if (questions.length === 0) return;
@@ -107,30 +83,17 @@ export function QuizScreen({
   }, [currentIndex, status, quizMode]);
 
   const handleNext = (finalScore: number, finalStreak: number, finalMissed: Hiragana[]) => {
-    if (quizLength !== 'endless' && currentIndex + 1 >= quizLength) {
+    if (currentIndex + 1 >= questions.length) {
       // Finish Quiz
       saveToLocal(finalStreak);
       onComplete({
         score: finalScore,
-        total: quizLength,
+        total: questions.length,
         bestStreak: Math.max(bestStreak, finalStreak),
         missedCharacters: finalMissed
       });
       onNavigate('results');
     } else {
-      if (quizLength === 'endless') {
-        if (currentIndex + 1 >= questions.length - 1) { 
-           const chars = hiraganaData.filter(h => selectedChars.includes(h.romaji));
-           let newBag = shuffleArray([...chars]);
-           const lastChar = questions[questions.length - 1].romaji;
-           if (newBag.length > 1 && newBag[0].romaji === lastChar) {
-             const temp = newBag[0];
-             newBag[0] = newBag[1];
-             newBag[1] = temp;
-           }
-           setQuestions([...questions, ...newBag]);
-        }
-      }
       setStatus('idle');
       setInputValue('');
       if (canvasRef.current) canvasRef.current.clear();
@@ -269,7 +232,7 @@ export function QuizScreen({
   if (questions.length === 0) return null;
 
   const currentQ = questions[currentIndex];
-  const progressPercent = quizLength === 'endless' ? 100 : ((currentIndex) / quizLength) * 100;
+  const progressPercent = ((currentIndex) / questions.length) * 100;
   // const accuracy is not used currently in QuizScreen UI directly
 
   return (
@@ -280,7 +243,7 @@ export function QuizScreen({
           <X size={24} strokeWidth={2.5} />
         </Button>
         <div className="flex items-center gap-4 flex-1 justify-center">
-          {quizLength !== 'endless' && <span className="text-xs font-bold text-slate-400 uppercase tracking-widest hidden sm:block">Question {currentIndex + 1} of {quizLength}</span>}
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest hidden sm:block">Question {currentIndex + 1} of {questions.length}</span>
           <div className="w-full max-w-[150px] h-3 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
             <motion.div 
               className="h-full bg-violet-500 rounded-full"
@@ -291,7 +254,7 @@ export function QuizScreen({
           </div>
         </div>
         <div className="w-16 text-slate-400 font-bold text-sm text-right flex flex-col items-end">
-          {streak > 1 ? <span className="text-orange-500">{streak}🔥</span> : `${quizLength !== 'endless' ? `${currentIndex + 1}/${quizLength}` : `∞`}`}
+          {streak > 1 ? <span className="text-orange-500">{streak}🔥</span> : `${currentIndex + 1}/${questions.length}`}
         </div>
       </div>
 

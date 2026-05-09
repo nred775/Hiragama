@@ -11,7 +11,7 @@ export function ResultsScreen({
   results: QuizResultsData
 }) {
 
-  const totalNum = results.total === 'endless' ? results.score : results.total;
+  const totalNum = results.total;
   const accuracy = totalNum === 0 ? 0 : Math.round((results.score / totalNum) * 100);
 
   return (
@@ -30,7 +30,7 @@ export function ResultsScreen({
         <div className="w-full grid grid-cols-2 gap-4">
           <div className="bg-violet-900/30 p-6 rounded-[32px] text-center border-2 border-violet-500/30 flex flex-col justify-center">
             <p className="text-violet-400 text-xs font-bold uppercase tracking-widest mb-2">Score</p>
-            <p className="text-4xl font-extrabold text-violet-400">{results.score} <span className="text-2xl text-violet-500">/ {results.total === 'endless' ? '-' : results.total}</span></p>
+            <p className="text-4xl font-extrabold text-violet-400">{results.score} <span className="text-2xl text-violet-500">/ {results.total}</span></p>
           </div>
           <div className="bg-orange-900/30 p-6 rounded-[32px] text-center border-2 border-orange-500/30 flex flex-col justify-center">
             <p className="text-orange-400 text-xs font-bold uppercase tracking-widest mb-2">Best Streak</p>

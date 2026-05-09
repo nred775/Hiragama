@@ -17,7 +17,7 @@ export type QuizMode = 'typing' | 'multiple-choice' | 'drawing';
 
 export type QuizResultsData = {
   score: number;
-  total: number | 'endless';
+  total: number;
   bestStreak: number;
   missedCharacters: Hiragana[];
 };
@@ -25,7 +25,6 @@ export type QuizResultsData = {
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenState>('home');
   const [selectedChars, setSelectedChars] = useState<string[]>([]); // Array of romaji
-  const [quizLength, setQuizLength] = useState<number | 'endless'>(10);
   const [quizMode, setQuizMode] = useState<QuizMode>('typing');
   const [quizResults, setQuizResults] = useState<QuizResultsData | null>(null);
 
@@ -46,8 +45,7 @@ export default function App() {
       {currentScreen === 'mode-select' && (
         <ModeSelect 
           onNavigate={setCurrentScreen} 
-          quizLength={quizLength}
-          setQuizLength={setQuizLength}
+          selectedChars={selectedChars}
           setQuizMode={setQuizMode}
         />
       )}
@@ -55,7 +53,6 @@ export default function App() {
         <QuizScreen 
           onNavigate={setCurrentScreen} 
           selectedChars={selectedChars}
-          quizLength={quizLength}
           quizMode={quizMode}
           onComplete={setQuizResults}
         />

@@ -5,13 +5,11 @@ import { ChevronLeft, Keyboard, LayoutGrid, PenTool } from 'lucide-react';
 
 export function ModeSelect({ 
   onNavigate, 
-  quizLength, 
-  setQuizLength,
+  selectedChars,
   setQuizMode
 }: { 
   onNavigate: (screen: ScreenState) => void, 
-  quizLength: number | 'endless',
-  setQuizLength: (len: number | 'endless') => void,
+  selectedChars: string[],
   setQuizMode: (mode: QuizMode) => void
 }) {
 
@@ -19,6 +17,8 @@ export function ModeSelect({
     setQuizMode(mode);
     onNavigate('quiz');
   };
+
+  const hasEnoughForMultipleChoice = selectedChars.length >= 4;
 
   return (
     <motion.div 
@@ -35,23 +35,6 @@ export function ModeSelect({
 
       <div className="px-6 flex-1 flex flex-col gap-10">
         
-        <div className="space-y-4">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Quiz Length</h3>
-          <div className="grid grid-cols-4 gap-2">
-            {[5, 10, 20, 'endless'].map(len => (
-              <Button 
-                key={len}
-                variant={quizLength === len ? 'primary' : 'outline'}
-                onClick={() => setQuizLength(len as any)}
-                className={`capitalize ${quizLength === len ? '!bg-violet-600 !border-violet-600 !text-white' : 'border-slate-700 text-slate-300 hover:bg-slate-800'}`}
-                size="sm"
-              >
-                {len === 'endless' ? '∞' : len}
-              </Button>
-            ))}
-          </div>
-        </div>
-
         <div className="space-y-4 pb-12">
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Select Mode</h3>
           
@@ -68,18 +51,31 @@ export function ModeSelect({
             </div>
           </button>
 
-          <button 
-            onClick={() => selectMode('multiple-choice')}
-            className="w-full bg-slate-900 p-5 rounded-3xl border-2 border-slate-800 hover:border-orange-500 hover:shadow-lg hover:-translate-y-1 transition-all text-left flex items-center gap-5 group"
-          >
-            <div className="w-14 h-14 rounded-2xl bg-orange-900/30 text-orange-400 flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-colors border border-orange-500/30 group-hover:border-orange-500 shadow-sm">
-              <LayoutGrid size={32} />
-            </div>
-            <div>
-              <h4 className="text-lg font-black text-slate-50">Multiple Choice</h4>
-              <p className="text-slate-400 text-sm font-medium">See the sound, pick the character.</p>
-            </div>
-          </button>
+          <div className="relative">
+            <button 
+              onClick={() => hasEnoughForMultipleChoice && selectMode('multiple-choice')}
+              disabled={!hasEnoughForMultipleChoice}
+              className={`w-full p-5 rounded-3xl border-2 text-left flex items-center gap-5 transition-all
+                ${hasEnoughForMultipleChoice 
+                  ? 'bg-slate-900 border-slate-800 hover:border-orange-500 hover:shadow-lg hover:-translate-y-1 group' 
+                  : 'bg-slate-900/50 border-slate-800/50 opacity-50 cursor-not-allowed'}`}
+            >
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors border shadow-sm
+                ${hasEnoughForMultipleChoice
+                  ? 'bg-orange-900/30 text-orange-400 border-orange-500/30 group-hover:bg-orange-500 group-hover:text-white group-hover:border-orange-500'
+                  : 'bg-slate-800 text-slate-500 border-slate-700'}`}
+              >
+                <LayoutGrid size={32} />
+              </div>
+              <div>
+                <h4 className="text-lg font-black text-slate-50">Multiple Choice</h4>
+                <p className="text-slate-400 text-sm font-medium">See the sound, pick the character.</p>
+              </div>
+            </button>
+            {!hasEnoughForMultipleChoice && (
+              <p className="text-rose-400 text-xs font-bold mt-2 ml-2">Requires at least 4 characters selected.</p>
+            )}
+          </div>
 
           <button 
             onClick={() => selectMode('drawing')}
